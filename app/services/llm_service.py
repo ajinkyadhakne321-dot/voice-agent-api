@@ -64,24 +64,45 @@ class LLMService:
 
         return recommendation
 
-    async def check_health(self) -> Dict[str, Any]:
+    def is_cloud_model(self) -> bool:
+        """Check if active model is an Ollama cloud model."""
+        return self.model.endswith(":cloud") or "ollama.com" in self.base_url
+
+    def _get_headers(self) -> Dict[str, str]:
+        """Prepare request headers including optional API key."""
+        headers = {"Content-Type": "application/json"}
+        api_key = settings.OLLAMA_API_KEY or os.environ.get("OLLAMA_API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return headers
+
+    async def check_health(self, force_refresh: bool = False) -> Dict[str, Any]:
         """
-        Check whether Ollama is active and verify if the selected model is pulled.
-        Returns detailed status, list of installed models, and instructions if missing.
+        Check whether Ollama is active and verify if the selected model is available.
+        Supports both local models and Ollama Cloud models with connection caching.
         """
+        import time
+        now = time.time()
+        if not force_refresh and hasattr(self, "_health_cache") and (now - getattr(self, "_health_cache_time", 0)) < 45.0:
+            return self._health_cache
+
         result = {
             "connected": False,
             "status": "unreachable",
             "url": self.base_url,
             "selected_model": self.model,
+            "is_cloud_model": self.is_cloud_model(),
             "model_available": False,
             "installed_models": [],
             "instructions": ""
         }
 
+        health_timeout = 15.0 if self.is_cloud_model() else 4.0
+
         try:
-            async with httpx.AsyncClient(timeout=4.0) as client:
-                resp = await client.get(f"{self.base_url}/api/tags")
+            headers = self._get_headers()
+            async with httpx.AsyncClient(timeout=health_timeout) as client:
+                resp = await client.get(f"{self.base_url}/api/tags", headers=headers)
                 if resp.status_code == 200:
                     data = resp.json()
                     models = [m.get("name") for m in data.get("models", [])]
@@ -89,19 +110,27 @@ class LLMService:
                     result["status"] = "connected"
                     result["installed_models"] = models
 
-                    # Check if selected model is present (checking both exact and tagless match)
-                    model_root = self.model.split(":")[0]
-                    matched = any(
-                        self.model == m or m.startswith(f"{model_root}:") or m == model_root
-                        for m in models
-                    )
-                    result["model_available"] = matched
-
-                    if not matched:
+                    if self.is_cloud_model():
+                        result["model_available"] = True
                         result["instructions"] = (
-                            f"Model '{self.model}' is not downloaded yet. "
-                            f"Run in your terminal: `ollama pull {self.model}`"
+                            f"Cloud model '{self.model}' active via Ollama Cloud."
                         )
+                    else:
+                        model_root = self.model.split(":")[0]
+                        matched = any(
+                            self.model == m or m.startswith(f"{model_root}:") or m == model_root
+                            for m in models
+                        )
+                        result["model_available"] = matched
+
+                        if not matched:
+                            result["instructions"] = (
+                                f"Model '{self.model}' is not downloaded yet. "
+                                f"Run in your terminal: `ollama pull {self.model}`"
+                            )
+                    # Cache successful result
+                    self._health_cache = result
+                    self._health_cache_time = now
                 else:
                     result["status"] = f"error_http_{resp.status_code}"
                     result["instructions"] = f"Ollama returned unexpected status {resp.status_code}."
@@ -111,7 +140,7 @@ class LLMService:
                 f"Ollama server is not running at {self.base_url}.\n"
                 "1. If Ollama is installed, start it by running `ollama serve` in a terminal.\n"
                 "2. If Ollama is not installed, download it from https://ollama.com\n"
-                f"3. Pull a model using: `ollama run {self.model}`"
+                f"3. For local models: `ollama run {self.model}` | For cloud: `ollama signin`"
             )
         except Exception as ex:
             result["status"] = "error"
@@ -126,7 +155,7 @@ class LLMService:
         temperature: float = 0.2
     ) -> str:
         """
-        Execute chat completion using local Ollama instance.
+        Execute chat completion using local Ollama instance or Ollama Cloud.
         Raises RuntimeError with actionable advice if Ollama is unavailable.
         """
         health = await self.check_health()
@@ -134,19 +163,19 @@ class LLMService:
             raise RuntimeError(
                 f"Local LLM runtime is offline. {health['instructions']}"
             )
-        if not health["model_available"] and health["installed_models"]:
-            # If user has other models installed, inform them
-            installed_list = ", ".join(health["installed_models"])
-            raise RuntimeError(
-                f"Selected model '{self.model}' is not installed in Ollama. "
-                f"Available models: [{installed_list}]. "
-                f"Download via: `ollama pull {self.model}` or change model in Settings."
-            )
-        elif not health["model_available"]:
-            raise RuntimeError(
-                f"No models found in local Ollama service. "
-                f"Please download a model using: `ollama pull {self.model}`"
-            )
+        if not health["model_available"]:
+            if health["installed_models"]:
+                installed_list = ", ".join(health["installed_models"])
+                raise RuntimeError(
+                    f"Selected model '{self.model}' is not installed in Ollama. "
+                    f"Available models: [{installed_list}]. "
+                    f"Download via: `ollama pull {self.model}` or change model in Settings."
+                )
+            else:
+                raise RuntimeError(
+                    f"No models found in local Ollama service. "
+                    f"Please download a model using: `ollama pull {self.model}`"
+                )
 
         formatted_messages = []
         if system_prompt:
@@ -162,13 +191,22 @@ class LLMService:
             }
         }
 
+        headers = self._get_headers()
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.post(
                     f"{self.base_url}/api/chat",
-                    json=payload
+                    json=payload,
+                    headers=headers
                 )
-                if resp.status_code != 200:
+                if resp.status_code == 401 or resp.status_code == 403:
+                    raise RuntimeError(
+                        f"Authentication required for cloud model '{self.model}'. "
+                        "Please run `ollama signin` in your terminal, or create an API key at "
+                        "https://ollama.com/settings/keys and add OLLAMA_API_KEY to your .env file."
+                    )
+                elif resp.status_code != 200:
                     raise RuntimeError(
                         f"Ollama returned HTTP error {resp.status_code}: {resp.text}"
                     )
@@ -180,7 +218,7 @@ class LLMService:
         except httpx.ReadTimeout:
             raise RuntimeError(
                 f"Ollama request timed out after {self.timeout} seconds. "
-                "Consider using a smaller model (e.g. `llama3.2:1b` or `phi3:mini`) for faster inference."
+                "Consider using a faster cloud or compact model for lower latency."
             )
         except httpx.RequestError as exc:
             raise RuntimeError(f"Network error communicating with Ollama: {exc}")

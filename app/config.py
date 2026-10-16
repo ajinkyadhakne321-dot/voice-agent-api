@@ -4,7 +4,7 @@ Loads configuration from environment variables and provides safe defaults.
 """
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,9 +16,10 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = False
 
-    # Local Ollama Settings
+    # Local Ollama & Cloud Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.2:3b"
+    OLLAMA_API_KEY: Optional[str] = None
     OLLAMA_TIMEOUT_SECONDS: int = 120
 
     # Local Embeddings & Retrieval Settings
