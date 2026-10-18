@@ -53,10 +53,10 @@ app.include_router(voice_router)
 async def serve_index(request: Request):
     """Serve the main Engineering AI Tutor web interface."""
     return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
+        request=request,
+        name="index.html",
+        context={
             "app_name": settings.APP_NAME,
-            "version": settings.VERSION
-        }
+            "version": settings.VERSION,
+        },
     )
