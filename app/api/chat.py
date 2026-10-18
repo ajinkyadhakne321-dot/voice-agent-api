@@ -5,7 +5,8 @@ mathematics verification (SymPy), and syllabus document retrieval.
 """
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException
+# pyrefly: ignore[missing-import]
+from fastapi import APIRouter
 from app.models.schemas import (
     ChatRequest, ChatResponse, LearningMode, SourceReference, MathVerification
 )

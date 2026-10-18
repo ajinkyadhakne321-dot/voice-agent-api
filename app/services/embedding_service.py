@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Try importing SentenceTransformer
 try:
+    # pyrefly: ignore[missing-import]
     from sentence_transformers import SentenceTransformer
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
