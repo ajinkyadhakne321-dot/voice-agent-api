@@ -3,10 +3,8 @@ Speech-to-Text (STT) Service.
 Integrates with local speech recognition models (Whisper / faster-whisper)
 and provides clear fallback diagnostics and browser Web Speech API bridging.
 """
-import os
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
 from app.config import settings
 from app.models.schemas import TranscribeResponse
 
@@ -14,16 +12,17 @@ logger = logging.getLogger(__name__)
 
 # Check for whisper or faster-whisper
 WHISPER_AVAILABLE = False
-whisper_model_instance = None
 
 try:
     import whisper
     WHISPER_AVAILABLE = True
 except ImportError:
+    whisper = None  # type: ignore[assignment]
     try:
-        import faster_whisper
+        import faster_whisper  # noqa: F401
         WHISPER_AVAILABLE = True
     except ImportError:
+        faster_whisper = None  # type: ignore[assignment]
         WHISPER_AVAILABLE = False
 
 
@@ -47,9 +46,8 @@ class SpeechToTextService:
         """Lazy load whisper model upon first audio request."""
         if not self.available:
             return None
-        if self.model is None:
+        if self.model is None and whisper is not None:
             try:
-                import whisper
                 logger.info(f"Loading Whisper model '{self.model_size}' locally...")
                 self.model = whisper.load_model(self.model_size)
             except Exception as e:

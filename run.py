@@ -6,8 +6,6 @@ and launches the FastAPI application server.
 """
 import sys
 import os
-import platform
-import subprocess
 import uvicorn
 
 # Ensure python version compatibility

@@ -4,7 +4,7 @@ Provides step-by-step calculus, algebra, differential equations, and solution ve
 """
 import re
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Any
 from app.models.schemas import MathVerification
 
 logger = logging.getLogger(__name__)
@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     import sympy as sp
     from sympy import (
-        symbols, sympify, solve, Eq, diff, integrate, limit, Matrix,
-        dsolve, Function, latex, simplify, expand, factor
+        symbols, solve, Eq, diff, integrate, simplify
     )
     from sympy.parsing.sympy_parser import (
         parse_expr, standard_transformations,
@@ -33,8 +32,7 @@ class MathematicsService:
         self.available = SYMPY_AVAILABLE
         if self.available:
             self.transformations = (
-                standard_transformations +
-                (implicit_multiplication_application, convert_xor)
+                standard_transformations + (implicit_multiplication_application, convert_xor)
             )
 
     def is_available(self) -> bool:

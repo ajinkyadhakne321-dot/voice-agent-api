@@ -2,12 +2,12 @@
 Application configuration for AI Engineering Tutor.
 Loads configuration from environment variables and provides safe defaults.
 """
-import os
 from pathlib import Path
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 class Settings(BaseSettings):
     APP_NAME: str = "AI Engineering Tutor"
@@ -64,6 +64,7 @@ class Settings(BaseSettings):
             self.AUDIO_DIR,
         ]:
             path.mkdir(parents=True, exist_ok=True)
+
 
 settings = Settings()
 settings.ensure_directories()

@@ -63,6 +63,10 @@ def run_evaluations():
         if math_check and math_check.get("verified"):
             print(f"  ✓ SymPy Verification: {math_check.get('result')}")
 
+        matched_concepts = [c for c in expected_concepts if c.lower() in resp_text.lower()]
+        if expected_concepts:
+            print(f"  ✓ Concepts matched: {len(matched_concepts)}/{len(expected_concepts)}")
+
         print(f"  ✓ Model status: {data.get('model_used')} | Retrieval status: {data.get('retrieval_status')}")
         print(f"  ✓ Response generated successfully ({len(resp_text)} characters)")
         passed_count += 1

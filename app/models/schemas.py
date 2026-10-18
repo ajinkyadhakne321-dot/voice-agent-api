@@ -3,7 +3,7 @@ Pydantic data models and schemas for AI Engineering Tutor.
 Covers chat, learning modes, document ingestion, retrieval, and health diagnostics.
 """
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 

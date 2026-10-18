@@ -7,7 +7,7 @@ import re
 import math
 import logging
 import numpy as np
-from typing import List, Optional
+from typing import List
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class FallbackTfIdfEmbedder:
         for w in words:
             if len(w) >= 3:
                 for i in range(len(w) - 2):
-                    tokens.append(w[i:i+3])
+                    tokens.append(w[i:i + 3])
         return tokens
 
     def encode(self, texts: List[str], normalize: bool = True) -> np.ndarray:

@@ -3,7 +3,7 @@ Document Management API endpoints.
 Provides uploading, text extraction, page tracking, chunking,
 metadata querying, and document removal from the vector search index.
 """
-from typing import Optional, List
+from typing import Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
 from app.models.schemas import (
     DocumentCategory, DocumentMetadata, DocumentListResponse, DocumentDeleteResponse

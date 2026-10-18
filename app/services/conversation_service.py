@@ -5,8 +5,7 @@ respects context windows, and provides immediate local memory wiping for student
 """
 import uuid
 from typing import List, Dict, Optional
-from datetime import datetime
-from app.models.schemas import ChatMessage
+from datetime import datetime, timezone
 
 
 class ConversationService:
@@ -35,7 +34,7 @@ class ConversationService:
         self._conversations[conv_id].append({
             "role": role,
             "content": content,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
         # Trim oldest messages (preserving pair context)

@@ -3,7 +3,6 @@ Unit tests for document ingestion, text extraction, chunking, and metadata stora
 """
 import pytest
 from app.services.document_service import document_service
-from app.models.schemas import DocumentCategory
 import pymupdf
 
 

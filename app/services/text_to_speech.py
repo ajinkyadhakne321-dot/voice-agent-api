@@ -5,13 +5,11 @@ Integrates with local offline speech synthesis:
 - System pyttsx3 or Piper if installed
 - Generates playable audio files and returns URLs for browser playback
 """
-import os
 import uuid
 import shutil
 import logging
 import platform
 import subprocess
-from pathlib import Path
 from typing import Optional, Tuple
 from app.config import settings
 
@@ -77,7 +75,7 @@ class TextToSpeechService:
                 return aiff_path.name, f"macOS Native ({selected_voice})"
             except subprocess.TimeoutExpired:
                 raise RuntimeError("Speech synthesis timed out.")
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 # If voice is invalid, try default without -v
                 try:
                     cmd_fallback = ["/usr/bin/say", "-o", str(aiff_path), speech_text]

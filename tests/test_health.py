@@ -1,7 +1,6 @@
 """
 Unit tests for backend health check endpoints and hardware recommendations.
 """
-import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 

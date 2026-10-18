@@ -3,7 +3,6 @@ Voice API endpoints for Speech-to-Text and Text-to-Speech.
 Enables offline transcription via local models and local offline speech synthesis.
 """
 import uuid
-from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 

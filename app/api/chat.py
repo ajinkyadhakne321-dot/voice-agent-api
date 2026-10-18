@@ -8,7 +8,7 @@ from typing import Optional
 # pyrefly: ignore[missing-import]
 from fastapi import APIRouter
 from app.models.schemas import (
-    ChatRequest, ChatResponse, LearningMode, SourceReference, MathVerification
+    ChatRequest, ChatResponse, LearningMode, MathVerification
 )
 from app.prompts.tutor_prompts import build_system_prompt, format_retrieval_context
 from app.services.llm_service import llm_service
@@ -77,7 +77,7 @@ async def chat(request: ChatRequest):
             f"Expression: {math_result.expression}\n"
             f"Calculated Result: {math_result.result}\n"
             f"Steps:\n" + "\n".join(f"- {s}" for s in (math_result.steps or [])) + "\n"
-            f"--- END OF MATHEMATICS VERIFICATION ---\n"
+            "--- END OF MATHEMATICS VERIFICATION ---\n"
         )
         system_prompt += math_context
 

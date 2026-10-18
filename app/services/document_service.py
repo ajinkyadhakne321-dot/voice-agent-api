@@ -3,13 +3,11 @@ Educational Document Processing Service.
 Handles safe file uploads, format validation, PDF/TXT/MD text extraction,
 page preservation, chunking, and JSON-based document metadata registry.
 """
-import os
 import re
 import json
 import uuid
 import hashlib
 import logging
-from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
